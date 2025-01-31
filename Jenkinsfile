@@ -22,31 +22,40 @@ pipeline {
             }
             post {
                 always {
-                    archiveArtifacts 'tfplan'
+                    steps { // <-- Add steps here
+                        archiveArtifacts 'tfplan'
+                    }
                 }
                 failure {
-                    echo "Terraform plan failed. Check the console logs."
-                    // Add notification logic here
+                    steps { // <-- Add steps here
+                        echo "Terraform plan failed. Check the console logs."
+                        // Add notification logic here
+                    }
                 }
             }
         }
 
         stage('Terraform Apply') {
-            // Corrected input step:
             steps {
                 input message: 'Are you sure you want to apply this Terraform plan?'
                 sh 'terraform apply tfplan'
             }
             post {
                 always {
-                    // Archive logs or other artifacts (optional)
+                    steps { // <-- Add steps here
+                        // Archive logs or other artifacts (optional)
+                    }
                 }
                 failure {
-                    echo "Terraform apply failed. Check the console logs."
-                    // Add notification logic here
+                    steps { // <-- Add steps here
+                        echo "Terraform apply failed. Check the console logs."
+                        // Add notification logic here
+                    }
                 }
                 success {
-                    echo "Terraform apply successful."
+                    steps { // <-- Add steps here
+                        echo "Terraform apply successful."
+                    }
                 }
             }
         }
