@@ -1,8 +1,16 @@
+terraform {
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 5.0" # or your desired version
+    }
+  }
+}
+
+
 provider "google" {
   project = "saitejaameda"
   region  = "us-central1"
-  credentials = file("gcp.json")
-
 }
 
 resource "google_compute_instance" "vm_instance" {
@@ -18,13 +26,14 @@ resource "google_compute_instance" "vm_instance" {
   }
 
   network_interface {
-    network = "default"
+    network = "default" # Consider creating a custom VPC and subnet for production
 
-    access_config {
-      // Assigns a public IP
+    access_config { # Explicitly define if you need a public IP
+        # nat_ip_address = google_compute_address.static.address # Example for static external IP
     }
   }
-
-
 }
-
+# resource "google_compute_address" "static" {
+#     name = "static-ip-address"
+#     region = "us-central1"
+# }
