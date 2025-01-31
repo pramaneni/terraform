@@ -1,66 +1,56 @@
 pipeline {
     agent any
-
     environment {
-        GOOGLE_APPLICATION_CREDENTIALS = credentials('jenkins-example') // GCP service account key in Jenkins credentials
+        GOOGLE_APPLICATION_CREDENTIALS = credentials('jenkins-example') // Your Google Cloud credentials ID
     }
-
     stages {
-        stage ("Checkout Code") {
+        stage('Checkout') {
             steps {
-                script {
-                    checkout scm
+                checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'pramaneni', url: 'https://github.com/pramaneni/terraform.git']]])
+                // OR, simpler git step (if you're sure about the branch name):
+                // git branch: 'master', credentialsId: 'YOUR_GIT_CREDENTIALS_ID', url: 'https://github.com/pramaneni/terraform.git'
+            }
+        }
+
+        stage('Terraform Init') {
+            steps {
+                sh 'terraform init'
+            }
+        }
+
+        stage('Terraform Plan') {
+            steps {
+                sh 'terraform plan -out=tfplan' // Save plan for later apply
+            }
+            post {
+                always {
+                    archiveArtifacts 'tfplan' // Archive the plan (optional but good practice)
+                }
+                failure {
+                  echo "Terraform plan failed. Check the console logs."
+                  // Add notification logic here (email, Slack, etc.)
                 }
             }
         }
 
-        stage ("Initialize Terraform") {
+        stage('Terraform Apply') {
+            // Removed -auto-approve for safety.  Now requires manual approval.
+            input message: 'Are you sure you want to apply this Terraform plan?'
             steps {
-                script {
-                    sh "terraform init"
+                sh 'terraform apply tfplan' // Apply the previously generated plan
+            }
+            post {
+                always {
+                  // Archive logs or other artifacts (optional)
+                }
+                failure {
+                  echo "Terraform apply failed. Check the console logs."
+                  // Add notification logic here
+                }
+                success {
+                  echo "Terraform apply successful."
                 }
             }
-        }
-
-        stage ("Validate Terraform") {
-            steps {
-                script {
-                    sh "terraform validate"
-                }
-            }
-        }
-
-        stage ("Terraform Plan") {
-            steps {
-                script {
-                    sh "terraform plan -out=tfplan"
-                }
-            }
-        }
-
-        stage ("Apply Terraform") {
-            steps {
-                script {
-                    sh "terraform apply -auto-approve tfplan"
-                }
-            }
-        }
-
-        stage ("Show Output") {
-            steps {
-                script {
-                    sh "terraform output"
-                }
-            }
-        }
-    }
-
-    post {
-        success {
-            echo "✅ Terraform deployment completed successfully!"
-        }
-        failure {
-            echo "❌ Terraform deployment failed. Check logs for errors."
         }
     }
 }
