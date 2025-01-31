@@ -1,14 +1,12 @@
 pipeline {
     agent any
     environment {
-        GOOGLE_APPLICATION_CREDENTIALS = credentials('jenkins-example') // Your Google Cloud credentials ID
+        GOOGLE_APPLICATION_CREDENTIALS = credentials('jenkins-example')
     }
     stages {
         stage('Checkout') {
             steps {
-                checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'pramaneni', url: 'https://github.com/pramaneni/terraform.git']]])
-                // OR, simpler git step (if you're sure about the branch name):
-                // git branch: 'master', credentialsId: 'YOUR_GIT_CREDENTIALS_ID', url: 'https://github.com/pramaneni/terraform.git'
+                checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'YOUR_GIT_CREDENTIALS_ID', url: 'https://github.com/pramaneni/terraform.git']]])
             }
         }
 
@@ -20,35 +18,35 @@ pipeline {
 
         stage('Terraform Plan') {
             steps {
-                sh 'terraform plan -out=tfplan' // Save plan for later apply
+                sh 'terraform plan -out=tfplan'
             }
             post {
                 always {
-                    archiveArtifacts 'tfplan' // Archive the plan (optional but good practice)
+                    archiveArtifacts 'tfplan'
                 }
                 failure {
-                  echo "Terraform plan failed. Check the console logs."
-                  // Add notification logic here (email, Slack, etc.)
+                    echo "Terraform plan failed. Check the console logs."
+                    // Add notification logic here
                 }
             }
         }
 
         stage('Terraform Apply') {
-            // Removed -auto-approve for safety.  Now requires manual approval.
-            input message: 'Are you sure you want to apply this Terraform plan?'
+            // Corrected input step:
             steps {
-                sh 'terraform apply tfplan' // Apply the previously generated plan
+                input message: 'Are you sure you want to apply this Terraform plan?'
+                sh 'terraform apply tfplan'
             }
             post {
                 always {
-                  // Archive logs or other artifacts (optional)
+                    // Archive logs or other artifacts (optional)
                 }
                 failure {
-                  echo "Terraform apply failed. Check the console logs."
-                  // Add notification logic here
+                    echo "Terraform apply failed. Check the console logs."
+                    // Add notification logic here
                 }
                 success {
-                  echo "Terraform apply successful."
+                    echo "Terraform apply successful."
                 }
             }
         }
