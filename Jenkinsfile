@@ -6,7 +6,7 @@ pipeline {
   stages {
      stage ("connecting to git") {
         steps{
-          git branch : "main", url : "https://github.com/pramaneni/terraform.git"
+          git branch : "master", url : "https://github.com/pramaneni/terraform.git"
         }
     }
 
